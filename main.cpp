@@ -11,29 +11,35 @@
 #include "inc/draw.hpp"
 #include "inc/balle.hpp"
 
+#define LARGEUR 1300
+#define HAUTEUR 600
+
 using namespace std;
+
+// prototype
+void init (Joueur&, Joueur&, Balle&);
 
 int main()
 {
     // Create the main window
-    sf::Window App(sf::VideoMode(800, 600, 32), "SFML OpenGL");
+    sf::RenderWindow App(sf::VideoMode(LARGEUR, HAUTEUR, 32), "SFML OpenGL");
 
     // Create a clock for measuring time elapsed
     sf::Clock Clock;
 
     // Création des joueurs
-    Joueur j1 = Joueur(20, - 30, 0, 12, 100, 0, 0, -100);
-    j1.setTouche(sf::Key::Up, sf::Key::Down, sf::Key::Left, sf::Key::Right, sf::Key::RControl);
-    Joueur j2 = Joueur(70, 30, 0, 12, 100, 0, 100, 0);
-    j2.setTouche(sf::Key::Z, sf::Key::S, sf::Key::Q, sf::Key::D, sf::Key::Space);
+    Joueur j1 = Joueur(20, - 30, 0, 15, 100, 0, 0, -100);
+    j1.setTouche(sf::Key::Z, sf::Key::S, sf::Key::Q, sf::Key::D, sf::Key::Space);
+    Joueur j2 = Joueur(70, 30, 0, 15, 100, 0, 100, 0);
+    j2.setTouche(sf::Key::Down, sf::Key::Up, sf::Key::Right, sf::Key::Left, sf::Key::RControl);
 
     // la balle
     Balle balle = Balle();
 
     // variable de camera
-    int posX = 200;
-    int posY = -40;
-    int posZ = 60;
+    int posX = 90;
+    int posY = -140;
+    int posZ = 80;
 
     // Set color and depth clear value
     glClearDepth(1.f);
@@ -43,10 +49,9 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
 
-    // Setup a perspective projection
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(70, (double)800/600, 1.f, 500.f);
+    // decoupage ecran
+    glEnable(GL_SCISSOR_TEST);
+
 
     // Start game loop
     while (App.IsOpened())
@@ -78,11 +83,16 @@ int main()
             // Escape key : exit
             if ((Event.Type == sf::Event::KeyPressed) && (Event.Key.Code == sf::Key::Escape))
                 App.Close();
+            // reinitialisation
+            if ((Event.Type == sf::Event::KeyPressed) && (Event.Key.Code == sf::Key::Return)) {
+                init (j1, j2, balle);
+            }
 
             // Resize event : adjust viewport
             if (Event.Type == sf::Event::Resized)
                 glViewport(0, 0, Event.Size.Width, Event.Size.Height);
         }
+
 
     // traitements des actions des joueurs
         j1.mouvement(App.GetInput());
@@ -90,54 +100,61 @@ int main()
         balle.deplacement(j1, j2);
 
 
-        // Clear color and depth buffer
+        // Clear color and depth buffer réinitialisation du scissor
+        glDisable (GL_SCISSOR_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable (GL_SCISSOR_TEST);
 
-        // Chargement de la matrice
-        // initialisation de la matrice identité
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
 
-        // camera
-        gluLookAt(posX, posY, posZ, 50, 0, 0, 0, 0, 1);
 
-        // les élements à dessiner
-        plateau();
-        filet();
     // JOUEUR 1
-        //pour que les transformations soient réversibles
-        glPushMatrix();
-        // placement de la sphere
-        glTranslated(j1.getPosX(), j1.getPosY(), j1.getPosZ());
-        //cout << j1.getPosX() << endl;
-        sphere(j1.getRayon(), 0, 0, 255);
-        //on revient a la matrice pricipale
-        glPopMatrix();
+    glScissor(0,0,LARGEUR/2, HAUTEUR);
+    glViewport(0,0,LARGEUR/2, HAUTEUR);
+        // Setup a perspective projection
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(70, (double)(LARGEUR/HAUTEUR/2), 1.f, 500.f);
+
+        // dessin
+        dessinFennetre(100, -150, 80, j1, j2, balle);
+
+
     // JOUEUR 2
-        //pour que les transformations soient réversibles
-        glPushMatrix();
-        // placement de la sphere
-        glTranslated(j2.getPosX(), j2.getPosY(), j2.getPosZ());
-        //cout << j1.getPosX() << endl;
-        sphere(j2.getRayon(), 0, 0, 255);
-        //on revient a la matrice pricipale
-        glPopMatrix();
-    // LA BALLE
-        //pour que les transformations soient réversibles
-        glPushMatrix();
-        // placement de la sphere
-        glTranslated(balle.GetposX(), balle.GetposY(), balle.GetposZ());
-        //cout << j1.getPosX() << endl;
-        sphere(balle.Getrayon(), 255, 0, 255);
-        //on revient a la matrice pricipale
-        glPopMatrix();
+    glScissor(LARGEUR/2,0,LARGEUR, HAUTEUR);
+    glViewport(LARGEUR/2,0,LARGEUR/2, HAUTEUR);
+        // Setup a perspective projection
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(70, (double)(LARGEUR/HAUTEUR/2), 1.f, 500.f);
+
+        // dessin
+        dessinFennetre(25, 150, 80, j1, j2, balle);
+
+
+sf::Shape Rect   = sf::Shape::Rectangle(LARGEUR/2 - 5, 0, LARGEUR/2 + 5, HAUTEUR, sf::Color(0,0,0));
 
         // Affichage
+        App.Draw(Rect);
         App.Display();
-        sf::Sleep(0.02f);
+        sf::Sleep(0.025f);
     }
 
     return EXIT_SUCCESS;
 }
 
+void init (Joueur& j1, Joueur& j2, Balle& balle) {
+    j1.setPosX(70);
+    j1.setPosY(-70);
+    j1.setPosZ(0);
 
+    j2.setPosX(30);
+    j2.setPosY(70);
+    j2.setPosZ(0);
+    // la balle
+    balle.SetposX(70);
+    balle.SetposY(-70);
+    balle.SetposZ(30);
+    balle.setVitesseX(0);
+    balle.setVitesseY(0);
+    balle.setVitesseZ(0);
+}

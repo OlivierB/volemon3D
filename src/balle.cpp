@@ -1,10 +1,10 @@
 #include "../inc/balle.hpp"
 
 #include "math.h"
-#define FORCE 5
+#define FORCE 6
 
 #include <iostream>
-//std::cout << "vrai" << std::endl;
+using namespace std;
 
 Balle::Balle()
 {
@@ -27,15 +27,17 @@ void Balle::deplacement(Joueur& j1, Joueur& j2) {
     // LES COLISIONS
         // on teste d'abord les collisions l'environnement
         collisionBord();
-        collisionFilet();
         // collision avec les joueurs
         collisionJoueur(j1);
         collisionJoueur(j2);
+        // collision avec le filet a la priorité
+        collisionFilet();
 
     // LE MOUVEMENT
         // la gravité
         if(GetposZ() > 0 + Getrayon())
             setVitesseZ(getVitesseZ() - Getpoids());
+
         // calcul de l'ajout
         SetposX(round((double)GetposX() + getVitesseX()));
         SetposY(round((double)GetposY() + getVitesseY()));
@@ -52,10 +54,10 @@ void Balle::collisionBord() {
     }
     if(GetposZ() < Getrayon() && getVitesseZ() < 0) {
         if(fabs(getVitesseZ()) <= 1) {
-            SetposZ(0 + Getrayon());
+            SetposZ(0 + Getrayon()-1);
             setVitesseZ(0);
-            // arret total de la balle
-            if(getVitesseX() < 1 && getVitesseY() < 1 ) {
+            // arret total de la balle (frottement)
+            if(getVitesseX() <= 1 && getVitesseY() <= 1 ) {
                 setVitesseX(0);
                 setVitesseY(0);
             }

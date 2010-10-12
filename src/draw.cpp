@@ -108,3 +108,70 @@ void sphere (int rayon, int r, int g, int b) {
 
 }
 
+void disque (int rayon, int r, int g, int b) {
+    //pour que les transformations soient réversibles
+    glPushMatrix();
+    glColor3ub(r, g, b);
+    // Declaration et initialisation
+    GLUquadric* params;
+    params = gluNewQuadric();
+    // Definition du style
+    gluQuadricDrawStyle( params, GLU_FILL);
+    // Création de la sphere
+    gluDisk(params, 0, (double)rayon - 0.2, 15, 1);
+
+    //supprime le quadrique pour libérer la memoire
+    gluDeleteQuadric(params);
+    //on revient a la matrice pricipale
+    glPopMatrix();
+}
+
+void dessinFennetre(int x, int y, int z, Joueur& j1, Joueur& j2, Balle& balle) {
+
+        // Chargement de la matrice
+        // initialisation de la matrice identité
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        // camera
+        gluLookAt(x, y, z, 50, 0, 0, 0, 0, 1);
+
+        // les élements à dessiner
+        plateau();
+        filet();
+    // JOUEUR 1
+        //pour que les transformations soient réversibles
+        glPushMatrix();
+        // placement de la sphere
+        glTranslated(j1.getPosX(), j1.getPosY(), j1.getPosZ());
+        //cout << j1.getPosX() << endl;
+        sphere(j1.getRayon(), 0, 255, 0);
+        //on revient a la matrice pricipale
+        glPopMatrix();
+    // JOUEUR 2
+        //pour que les transformations soient réversibles
+        glPushMatrix();
+        // placement de la sphere
+        glTranslated(j2.getPosX(), j2.getPosY(), j2.getPosZ());
+        //cout << j1.getPosX() << endl;
+        sphere(j2.getRayon(), 0, 0, 255);
+        //on revient a la matrice pricipale
+        glPopMatrix();
+    // LA BALLE
+        //pour que les transformations soient réversibles
+        glPushMatrix();
+        // placement de la sphere
+        glTranslated(balle.GetposX(), balle.GetposY(), balle.GetposZ());
+        //cout << j1.getPosX() << endl;
+        sphere(balle.Getrayon(), 255, 0, 255);
+        //on revient a la matrice pricipale
+        glPopMatrix();
+        // OMBRE de la balle
+        glPushMatrix();
+        // placement de la sphere
+        glTranslated(balle.GetposX(), balle.GetposY(), 1);
+        //cout << j1.getPosX() << endl;
+        disque(balle.Getrayon(), 0, 0, 0);
+        //on revient a la matrice pricipale
+        glPopMatrix();
+}
